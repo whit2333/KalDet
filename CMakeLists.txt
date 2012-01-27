@@ -94,7 +94,7 @@ INCLUDE_DIRECTORIES( ${ROOT_DICT_INCLUDE_DIRS} )
 
 FILE( GLOB_RECURSE ild_sources "ild/*.cc" )
 FILE( GLOB_RECURSE ild_headers "ild/*.h" )
-INCLUDE_DIRECTORIES( ild/common )
+INCLUDE_DIRECTORIES( ild/common ild/util )
 
 INSTALL( FILES ${ild_headers} DESTINATION "include/kaldet" )
 
