@@ -11,6 +11,8 @@ class CartesianCoordinateSystem : public ICoordinateSystem{
    
 public:
    
+   CartesianCoordinateSystem( TVector3 T , TRotation R ): _T(T), _R(R){}
+   
    /** @return the local coordinates of the point */
    virtual TVector3 getLocalPoint( TVector3 globalPoint );
    

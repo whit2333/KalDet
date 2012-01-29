@@ -14,8 +14,11 @@ namespace GearExtensions{
 }
 
 namespace gear{
-  class GearMgr ;
+  class GearMgr;
+  class ZPlanarParameters;
+  class FTDParameters;
 }
+
 
 namespace GearExtensions{
   
@@ -47,7 +50,7 @@ namespace GearExtensions{
     /** Destructor */
     ~MeasurementSurfaceStore();   
     
-    void initialise(gear::GearMgr* gear_mrg) ;
+    void initialise(gear::GearMgr* gear_mgr) ;
     
     /** Get Material via name */
     MeasurementSurface* GetMeasurementSurface( int ID ) const ;  
@@ -64,7 +67,16 @@ namespace GearExtensions{
     
     void addMeasurementSurface(MeasurementSurface* mat); 
     
-    void createStore(gear::GearMgr* gear_mrg);
+    void createStore(gear::GearMgr* gear_mgr);
+    
+    /** adds MeasurementSufaces to the store
+     * @param param: the ZPlanarParameters pointer of the detector, of which the measurement surfaces shall be added
+     * 
+     * @param det_id: the detector id (as in ILDConf)
+     */
+    void storeZPlanar( const gear::ZPlanarParameters* param , int det_id );
+    
+    void storeFTD( const gear::FTDParameters* param );
     
     // private member variables
     std::map<int,MeasurementSurface* > _measurement_surface_map;
