@@ -95,13 +95,13 @@ namespace GearExtensions{
     
     
     const gear::ZPlanarParameters* paramVXD = &(gear_mgr->getVXDParameters());
-//     storeZPlanar( paramVXD , UTIL::ILDDetID::VXD );
+    storeZPlanar( paramVXD , UTIL::ILDDetID::VXD );
    
     const gear::ZPlanarParameters* paramSIT = &(gear_mgr->getSITParameters());
     storeZPlanar( paramSIT , UTIL::ILDDetID::SIT );
     
     const gear::ZPlanarParameters* paramSET = &(gear_mgr->getSETParameters());
-//     storeZPlanar( paramSET , UTIL::ILDDetID::SET );
+    storeZPlanar( paramSET , UTIL::ILDDetID::SET );
     
     const gear::FTDParameters* paramFTD = &(gear_mgr->getFTDParameters());
     storeFTD( paramFTD );
@@ -181,12 +181,9 @@ namespace GearExtensions{
         
         // Next we rotate 90° clockwise around y, so the strip now points in z direction (if strip angle == 0)
         R.RotateY( -M_PI/2. );
-        printRotation( R );
+
         // Finally we have to get the ladder in place w.r. to its number and the resulting phi angle
         R.RotateZ( deltaPhi * ladderNumber + phi0 );
-        printRotation( R );
-        R.Invert();
-        printRotation(R);
                 
         CartesianCoordinateSystem* cartesian = new CartesianCoordinateSystem( T, R );
         
