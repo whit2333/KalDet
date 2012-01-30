@@ -20,8 +20,20 @@
 #include "TRotation.h"
 #include "CartesianCoordinateSystem.h"
 
+#include "streamlog/streamlog.h"
+
 namespace GearExtensions{
 
+  
+  void printRotation( const TRotation& R ){
+    
+    streamlog_out(DEBUG4).precision(2);
+    streamlog_out(DEBUG4).setf( std::ios::fixed , std::ios::floatfield );
+    streamlog_out(DEBUG4) << "R:\n"
+                          << "| " << R.XX() << "  " << R.XY() << "  " << R.XZ() << " |\n"
+                          << "| " << R.YX() << "  " << R.YY() << "  " << R.YZ() << " |\n"
+                          << "| " << R.ZX() << "  " << R.ZY() << "  " << R.ZZ() << " |\n";
+  }
   
   bool MeasurementSurfaceStore::_isInitialised = false ;
   
@@ -83,13 +95,13 @@ namespace GearExtensions{
     
     
     const gear::ZPlanarParameters* paramVXD = &(gear_mgr->getVXDParameters());
-    storeZPlanar( paramVXD , UTIL::ILDDetID::VXD );
+//     storeZPlanar( paramVXD , UTIL::ILDDetID::VXD );
    
     const gear::ZPlanarParameters* paramSIT = &(gear_mgr->getSITParameters());
     storeZPlanar( paramSIT , UTIL::ILDDetID::SIT );
     
     const gear::ZPlanarParameters* paramSET = &(gear_mgr->getSETParameters());
-    storeZPlanar( paramSET , UTIL::ILDDetID::SET );
+//     storeZPlanar( paramSET , UTIL::ILDDetID::SET );
     
     const gear::FTDParameters* paramFTD = &(gear_mgr->getFTDParameters());
     storeFTD( paramFTD );
@@ -109,14 +121,16 @@ namespace GearExtensions{
     
     for( unsigned layerNumber = 0; layerNumber < nLayers; layerNumber++ ){
       
-      
+      unsigned nLadders = layerLayout.getNLadders( layerNumber );
       double ladder_r            = layerLayout.getSensitiveDistance(layerNumber); // the distance of the ladders from (0,0,0)
       double sensitive_offset    = layerLayout.getSensitiveOffset(layerNumber); // the offset, see ZPlanarLayerLayout.h for more details
-      double deltaPhi            = ( 2 * M_PI ) / layerLayout.getNLadders(layerNumber) ; // the phi difference between two ladders
+      double deltaPhi            = ( 2 * M_PI ) / nLadders ; // the phi difference between two ladders
       double phi0                = layerLayout.getPhi0( layerNumber );
       double stripAngle = 0.; // TODO: implement
       
-      unsigned nLadders = layerLayout.getNLadders( layerNumber );
+      
+      
+      streamlog_out(DEBUG4) << "NLADDERS = " << nLadders << "\n";
       
       for( unsigned ladderNumber = 0; ladderNumber < nLadders; ladderNumber++ ){
         
@@ -129,6 +143,7 @@ namespace GearExtensions{
         cellID[ lcio::ILDCellID0::sensor ] = 0 ;
         int cellID0 = cellID.lowWord();
         
+        streamlog_out(DEBUG4) << "layer = " << layerNumber << "\tladder = " << ladderNumber << "\n";
         
         // Let's start with the translation T: the new center of coordinates:
         // The center of the first ladder (when we ignore an offset and phi0 for now) is (R,0,0)
@@ -140,7 +155,7 @@ namespace GearExtensions{
         rot.RotateZ( deltaPhi * ladderNumber + phi0 );
         
         T = rot * T;
-        
+        T.Print();
         
         // Next, we want to determinte the rotation matrix R
         // We start with u,v,w alligned with x,y,z.
@@ -158,19 +173,21 @@ namespace GearExtensions{
         // To get this sensor in place we have to do a few rotations:
         // First we'll rotate around the z axis. With a strip angle of 0,
         // we would just rotate by 90°, but with a strip angle by
-        // 90°-stripAngle in clockwise direction. TODO: clockwise?
+        // 90°-stripAngle in clockwise direction. 
         TRotation R;
+        printRotation( R );        
         R.RotateZ( stripAngle - M_PI/2. );
+        printRotation( R );
         
         // Next we rotate 90° clockwise around y, so the strip now points in z direction (if strip angle == 0)
-        R.RotateY( M_PI/2. );
-        
+        R.RotateY( -M_PI/2. );
+        printRotation( R );
         // Finally we have to get the ladder in place w.r. to its number and the resulting phi angle
         R.RotateZ( deltaPhi * ladderNumber + phi0 );
-        
-        // Now the one last step is important: the coordinate system saves the matrix vom local to global, so we have to invert
+        printRotation( R );
         R.Invert();
-        
+        printRotation(R);
+                
         CartesianCoordinateSystem* cartesian = new CartesianCoordinateSystem( T, R );
         
         
@@ -213,7 +230,7 @@ namespace GearExtensions{
           
           double stripAngle = 0.; // TODO: implement
           
-          cellID[ lcio::ILDCellID0::side   ] = 1 ;                    
+          cellID[ lcio::ILDCellID0::side   ] = -1 ;                    
           cellID[ lcio::ILDCellID0::sensor ] = sensor ;
           int cellID0 = cellID.lowWord();
           
@@ -232,7 +249,7 @@ namespace GearExtensions{
 
           double x = (xmin+xmax) / 2.;
           double y = 0.;
-          double z = ftdLayers.getSensitiveZposition( layer, petal, sensor );
+          double z = -ftdLayers.getSensitiveZposition( layer, petal, sensor );
           TVector3 T( x , y, z);
           
           // Now we only have to rotate the petal around the z-axis into its place
@@ -245,25 +262,29 @@ namespace GearExtensions{
           TRotation R;
           R.RotateZ( petal * deltaPhi + phi0 + stripAngle - M_PI/2. );
           
-          R.Invert(); // CoordinateSystem wants matrix for local to global not the other way rount
-          
           
           CartesianCoordinateSystem* cartesian = new CartesianCoordinateSystem( T, R );
           MeasurementSurface* ms = new MeasurementSurface( cellID0, cartesian );
           addMeasurementSurface( ms );
           
           // Once more for the other side
-          cellID[ lcio::ILDCellID0::side   ] = -1 ;   
+          cellID[ lcio::ILDCellID0::side   ] = 1 ;   
           cellID0 = cellID.lowWord();
           
           T.SetZ( -T.Z() ); // switch 
-          // TODO: do we have to change R ??? like flipping u or v to the other side?
+          // R is pretty much the same as the strip orientation will be the same,
+          // but as (by chosen definition) w should point towards the IP,
+          // we have to flip u around. So we acutally have to rotate 180° around v
+          // So first we get the vector v
+          TVector3 v = R*TVector3(0,1,0);
+          // Then we rotate around it
+          R.Rotate( M_PI , v );
           
           CartesianCoordinateSystem* cartesian2 = new CartesianCoordinateSystem( T, R );
           MeasurementSurface* ms2 = new MeasurementSurface( cellID0, cartesian2 );
           addMeasurementSurface( ms2 );
           
-                   
+          
           
           //TODO: do we need alpha in here?
           
