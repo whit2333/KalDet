@@ -52,7 +52,7 @@ namespace GearExtensions{
     
     void initialise(gear::GearMgr* gear_mgr) ;
     
-    /** Get Material via name */
+    /** Get Measurement Surface via ID */
     MeasurementSurface* GetMeasurementSurface( int ID ) const ;  
     
     
@@ -65,7 +65,7 @@ namespace GearExtensions{
     MeasurementSurfaceStore(const MeasurementSurfaceStore&) ;                 // Prevent copy-construction
     MeasurementSurfaceStore& operator=(const MeasurementSurfaceStore&) ;      // Prevent assignment
     
-    void addMeasurementSurface(MeasurementSurface* mat); 
+    void addMeasurementSurface(MeasurementSurface* ms); 
     
     void createStore(gear::GearMgr* gear_mgr);
     
